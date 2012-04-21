@@ -36,15 +36,32 @@ function get_random_file($username){
     $commits = json_decode(file_get_contents($file_path));
     $commit = $commits[0];
     $tree = $commit->commit->tree->sha;
-    $file_path = "https://api.github.com/repos/$username/" . $rand_repo->name . "/git/trees/$tree";
+    $blobs = get_blobs_in_tree($tree,$username,$rand_repo->name);
+    foreach($blobs as $blob){
+        print "Examining file: " . $blob->path . "\n";
+    }
+
+}
+
+function get_blobs_in_tree($tree_hash,$username,$repo_name){
+    $to_return = array();
+
+    $file_path = "https://api.github.com/repos/$username/$repo_name/git/trees/$tree_hash";
     $tree= json_decode(file_get_contents($file_path));
+
     foreach($tree->tree as $elem){
         if($elem->type === "blob"){
-            $ret_val = http_blob_get($elem->url);
-            print "\n$ret_val\n";
+            print "found file: " . $elem->path . "\n";
+            $to_return[] = $elem;
         } else{
+            print "Recursing into directory " . $elem->path . "\n";
+            $sub_tree = get_blobs_in_tree($elem->sha,$username,$repo_name);
+            foreach($sub_tree as $blob){
+                $to_return[] = $blob;
+            }
         }
     }
+    return $to_return;
 
 }
 
