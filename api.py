@@ -23,7 +23,7 @@ def get_code (lang):
     except Exception, e:
         print e
 
-@app.route('/<username>/<filename>')
+@app.route('/upvote/<username>/<filename>')
 def upvote (username, filename):
     count = db.files.find({'username': username, 'filename': filename}).count()
     print count
@@ -38,6 +38,11 @@ def upvote (username, filename):
         )
 
     return ''
+
+@app.route('/<username>/<filename>')
+def upvote (username, filename):
+    _file = db.users.find({'files': {'$elemMatch': {'filename': filename}, 'user': username}})[0]
+    return _file['text']
 
 app.debug = True
 app.run(host='0.0.0.0')
